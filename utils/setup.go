@@ -63,62 +63,67 @@ func Setup(prefix string, x interface{}) {
 			flagName = fmt.Sprintf("%s.%s", prefix, flagName)
 		}
 		defaultStr, usage := getParams(ftyp.Tag)
-		switch fvar := field.Addr().Interface().(type) {
-		case *bool:
-			defaultVal, err := strconv.ParseBool(defaultStr)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
+		ivar := field.Addr().Interface()
+		if v, ok := ivar.(flag.Value); ok {
+			flag.Var(v, flagName, usage)
+		} else {
+			switch fvar := ivar.(type) {
+			case *bool:
+				defaultVal, err := strconv.ParseBool(defaultStr)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.BoolVar(fvar, flagName, defaultVal, usage)
+
+			case *time.Duration:
+				defaultVal, err := time.ParseDuration(defaultStr)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.DurationVar(fvar, flagName, defaultVal, usage)
+
+			case *float64:
+				defaultVal, err := strconv.ParseFloat(defaultStr, 64)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.Float64Var(fvar, flagName, defaultVal, usage)
+
+			case *int:
+				defaultVal, err := strconv.ParseInt(defaultStr, 10, _W)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.IntVar(fvar, flagName, int(defaultVal), usage)
+
+			case *int64:
+				defaultVal, err := strconv.ParseInt(defaultStr, 10, 64)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.Int64Var(fvar, flagName, defaultVal, usage)
+
+			case *string:
+				flag.StringVar(fvar, flagName, defaultStr, usage)
+
+			case *uint:
+				defaultVal, err := strconv.ParseUint(defaultStr, 10, _W)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.UintVar(fvar, flagName, uint(defaultVal), usage)
+
+			case *uint64:
+				defaultVal, err := strconv.ParseUint(defaultStr, 10, 64)
+				if err != nil {
+					panic(fmt.Sprintf("flagfile: %s", err))
+				}
+				flag.Uint64Var(fvar, flagName, defaultVal, usage)
+
+			default:
+				panic(fmt.Sprintf(
+					"flagfile: can't set flag value for type %s", field.Type()))
 			}
-			flag.BoolVar(fvar, flagName, defaultVal, usage)
-
-		case *time.Duration:
-			defaultVal, err := time.ParseDuration(defaultStr)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.DurationVar(fvar, flagName, defaultVal, usage)
-
-		case *float64:
-			defaultVal, err := strconv.ParseFloat(defaultStr, 64)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.Float64Var(fvar, flagName, defaultVal, usage)
-
-		case *int:
-			defaultVal, err := strconv.ParseInt(defaultStr, 10, _W)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.IntVar(fvar, flagName, int(defaultVal), usage)
-
-		case *int64:
-			defaultVal, err := strconv.ParseInt(defaultStr, 10, 64)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.Int64Var(fvar, flagName, defaultVal, usage)
-
-		case *string:
-			flag.StringVar(fvar, flagName, defaultStr, usage)
-
-		case *uint:
-			defaultVal, err := strconv.ParseUint(defaultStr, 10, _W)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.UintVar(fvar, flagName, uint(defaultVal), usage)
-
-		case *uint64:
-			defaultVal, err := strconv.ParseUint(defaultStr, 10, 64)
-			if err != nil {
-				panic(fmt.Sprintf("flagfile: %s", err))
-			}
-			flag.Uint64Var(fvar, flagName, defaultVal, usage)
-
-		default:
-			panic(fmt.Sprintf(
-				"flagfile: can't set flag value for type %s", field.Type()))
 		}
 	}
 }
